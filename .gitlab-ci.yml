@@ -1,0 +1,109 @@
+stages:
+    - deploy
+cache:
+    paths:
+        - node_modules/
+
+deploy_qa:
+    image: node
+    stage: deploy
+    tags:
+        - docker
+    script:
+        - apt-get update && apt-get install -y python curl jq python python-pip zip
+        - pip install awscli
+        - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+        - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+        - aws configure set region $AWS_REGION
+        - VERSION_LABEL=$APP_NAME-$CI_PIPELINE_ID-Qa
+        - npm install
+        - npm run build
+        - sh compress.sh
+        - aws s3 cp maritime-auth-api.zip s3://$QA_AWS_S3_BUCKET/$VERSION_LABEL.zip
+        - aws elasticbeanstalk create-application-version --application-name $QA_APP_NAME --version-label "$VERSION_LABEL" --source-bundle S3Bucket=$QA_AWS_S3_BUCKET,S3Key=$VERSION_LABEL.zip
+        - aws elasticbeanstalk update-environment --application-name $QA_APP_NAME --environment-name $QA_ENVIRONMENT_NAME --version-label "$VERSION_LABEL"
+ 
+    environment:
+        name: qa
+    only:
+        - qa
+
+deploy_develop:
+    image: node
+    stage: deploy
+    tags:
+        - docker
+    script:
+        - apt-get update && apt-get install -y python curl jq python python-pip zip
+        - pip install awscli
+        - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+        - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+        - aws configure set region $DEV_AWS_REGION
+        - VERSION_LABEL=$APP_NAME-$CI_PIPELINE_ID-Dev
+        - npm install
+        - npm run build
+        - sh compress.sh
+        - aws s3 cp maritime-auth-api.zip s3://$DEV_AWS_S3_BUCKET/$VERSION_LABEL.zip
+        - aws elasticbeanstalk create-application-version --application-name $DEV_APP_NAME --version-label "$VERSION_LABEL" --source-bundle S3Bucket=$DEV_AWS_S3_BUCKET,S3Key=$VERSION_LABEL.zip
+        - aws elasticbeanstalk update-environment --application-name $DEV_APP_NAME --environment-name $DEV_ENVIRONMENT_NAME --version-label "$VERSION_LABEL"
+ 
+    environment:
+        name: develop
+    only:
+        - develop
+
+deploy_uat:
+    image: node
+    stage: deploy
+    tags:
+        - docker
+    script:
+        - apt-get update && apt-get install -y python curl jq python python-pip zip
+        - pip install awscli
+        - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+        - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+        - aws configure set region $UAT_AWS_REGION
+        - VERSION_LABEL=$APP_NAME-$CI_PIPELINE_ID-Uat
+        - npm install
+        - npm run build
+        - sh compress.sh
+        - aws s3 cp maritime-auth-api.zip s3://$UAT_AWS_S3_BUCKET/$VERSION_LABEL.zip
+        - aws elasticbeanstalk create-application-version --application-name $UAT_APP_NAME --version-label "$VERSION_LABEL" --source-bundle S3Bucket=$UAT_AWS_S3_BUCKET,S3Key=$VERSION_LABEL.zip
+        - aws elasticbeanstalk update-environment --application-name $UAT_APP_NAME --environment-name $UAT_ENVIRONMENT_NAME --version-label "$VERSION_LABEL"
+ 
+    environment:
+        name: uat
+    only:
+        - uat
+
+.eb_deploy_template: &eb_deploy_definition
+  image: node
+  stage: deploy
+  tags:
+      - docker
+  script:
+    - apt-get update && apt-get install -y python curl jq python python-pip zip
+    - pip install awscli
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    - ZIP_NAME=maritime-auth-api.zip
+    - sh compress.sh $ZIP_NAME
+    - echo "APP_NAME=$APP_NAME VERSION_LABEL=$VERSION_LABEL AWS_S3_BUCKET=$AWS_S3_BUCKET ENVIRONMENT_NAME=$ENVIRONMENT_NAME"
+    - aws s3 cp $ZIP_NAME s3://$AWS_S3_BUCKET/$VERSION_LABEL.zip
+    - aws elasticbeanstalk create-application-version --application-name $APP_NAME --version-label "$VERSION_LABEL" --source-bundle S3Bucket=$AWS_S3_BUCKET,S3Key=$VERSION_LABEL.zip
+    - aws elasticbeanstalk update-environment --application-name $APP_NAME --environment-name $ENVIRONMENT_NAME --version-label "$VERSION_LABEL"
+
+prod_eb_deploy:
+  <<: *eb_deploy_definition
+  before_script:
+    - APP_NAME=$PROD_APP_NAME
+    - ENVIRONMENT_NAME=$PROD_ENVIRONMENT_NAME
+    - AWS_S3_BUCKET=$PROD_AWS_S3_BUCKET
+    - VERSION_LABEL=$APP_NAME-$CI_PIPELINE_ID-Prod
+    - AWS_REGION=$PROD_AWS_REGION
+  environment:
+    name: prod
+  when: manual
+  only:
+    - develop
