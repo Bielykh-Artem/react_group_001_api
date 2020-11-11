@@ -11,7 +11,7 @@ export const fetchArticle = async (id: number): Promise<any> => {
 export const addArticle = async (article: any): Promise<any> => {
   const body = { ...article, created_by: "artem" };
 
-  console.log('body', body)
+  console.log("body", body);
 
   return await Article.query().insertAndFetch(body);
 };

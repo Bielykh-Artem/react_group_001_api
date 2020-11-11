@@ -2,21 +2,23 @@ import { SwaggerAPI } from "koa-joi-router-docs";
 import { ParameterizedContext } from "koa";
 
 import articleRoutes from "./articles";
+import authRoutes from "./auth";
 
 require("dotenv").config();
 
 const generator = new SwaggerAPI();
 
 generator.addJoiRouter(articleRoutes());
+generator.addJoiRouter(authRoutes());
 
 const spec = generator.generateSpec(
   {
     info: {
-      title: "maritime-auth-api",
-      description: "API Maritime Banking Auth",
+      title: "react-app-api",
+      description: "API",
       version: process.env.npm_package_version,
     },
-    basePath: "/api/v1/",
+    basePath: "/api",
     tags: [
       // TODO
     ],
