@@ -12,7 +12,7 @@ import * as passport from "koa-passport";
 import * as Knex from "knex";
 
 const env = process.env.NODE_ENV || "development";
-const { host, port, maritime_auth_api_url } = config;
+const { host, port, app_url } = config;
 const app: Koa = new Koa();
 const knexConfig = require("../knexfile")[env];
 
@@ -45,7 +45,7 @@ app.use(
     routePrefix: "/swagger",
     swaggerOptions: {
       url:
-        env === "development" ? `http://${host}:${port}/api/v1/_api.json` : `${maritime_auth_api_url}/api/v1/_api.json`,
+        env === "development" ? `http://${host}:${port}/api/v1/_api.json` : `${app_url}/api/v1/_api.json`,
       requestInterceptor: swaggerInterceptRequest,
       responseInterceptor: swaggerInterceptResponse,
       modelPropertyMacro: () => {},
