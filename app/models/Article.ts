@@ -1,6 +1,6 @@
 import { Model, QueryBuilderType } from "objection";
 
-export default class User extends Model {
+export default class Article extends Model {
   static get tableName() {
     return "article";
   }

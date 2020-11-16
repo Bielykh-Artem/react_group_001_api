@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": "12.11.1"
+    },
   "scripts": {
     "build": "rm -rf dist && tsc",
     "dev": "node ./node_modules/pm2/bin/pm2-runtime start ecosystem.develop.config.js",

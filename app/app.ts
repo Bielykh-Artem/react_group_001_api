@@ -22,6 +22,13 @@ knex.migrate.latest();
 
 Model.knex(knex);
 
+knex
+  .raw("select 1+1 as result")
+  .then(() => {
+    console.log("Connection to banking successfully completed");
+  })
+  .catch((err: any) => console.log("Connection banking error:", err));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
